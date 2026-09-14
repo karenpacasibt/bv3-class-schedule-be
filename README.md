@@ -9,7 +9,12 @@ src/
 ├── config/config.js                  # Lectura de .env
 ├── db/
 │   ├── connection.js                 # Instancia de Sequelize
-│   └── createDatabase.js             # Crea la DB si no existe
+│   ├── createDatabase.js             # Crea la DB si no existe
+│   ├── runSqlFiles.js                # Ejecuta los .sql pendientes de una carpeta
+│   ├── runMigrations.js              # npm run migrate
+│   ├── runSeeders.js                 # npm run seed
+│   ├── migrations/                   # .sql que crean y modifican tablas
+│   └── seeders/                      # .sql con datos iniciales (usuario demo)
 ├── models/
 │   ├── index.js                      # Autocarga de modelos + asociaciones
 │   └── user.model.js                 # Modelo de ejemplo
@@ -20,7 +25,6 @@ src/
 │   ├── user.controller.js            # Logica: me()
 │   └── user.controller.test.js       # Test co-locado (node:test)
 ├── decorators/user.decorator.js      # Shape de la respuesta (DTO)
-├── seeders/iniData.js                # Usuario demo
 └── utils/hashPassword.js             # Helper bcrypt
 ```
 
@@ -47,8 +51,8 @@ Necesitas MySQL corriendo en tu computadora. Puedes usar **Laragon** o **XAMPP**
 
 Los dos usan el puerto `3306`, el usuario `root` y vienen sin contrasena.
 
-> No tienes que crear la base de datos a mano. El proyecto la crea solo la
-> primera vez que arranca.
+> No tienes que crear la base de datos a mano. `npm run migrate` la crea si
+> todavia no existe.
 
 ### 2. Instala las dependencias
 
@@ -65,32 +69,46 @@ cp .env.example .env
 Si usas Laragon o XAMPP no tienes que cambiar nada. Si tu MySQL tiene
 contrasena o usa otro puerto, cambia `DB_PASSWORD` o `DB_PORT`.
 
-### 4. Arranca el proyecto
+### 4. Crea las tablas y carga los datos iniciales
+
+```bash
+npm run db:setup
+```
+
+Crea la base de datos (`DB_NAME`) si no existe y ejecuta las migraciones y los
+seeders. Si todo sale bien vas a ver algo asi:
+
+```
+migrations: 20260914_10_00_00_create_users_table.sql
+Migrations complete
+seeders: 20260914_11_00_00_seed_demo_user.sql
+Seeders complete
+```
+
+Solo hace falta volver a correrlo cuando se agrega una migracion o un seeder
+nuevo. Ver [Migraciones y seeders](#migraciones-y-seeders).
+
+### 5. Arranca el proyecto
 
 ```bash
 npm run dev
 ```
 
-Si todo sale bien vas a ver algo asi:
-
 ```
 Database connected
-models synchronized
-User seeded: user@admin.com
-Seeders loaded
 Server running on port 3000
 ```
 
-Cada vez que arranca, el proyecto:
-
-1. Crea la base de datos (`DB_NAME`) si todavia no existe.
-2. Crea o actualiza las tablas a partir de los modelos (`sequelize.sync({ alter: true })`).
-3. Carga el usuario demo (seeders).
+El servidor solo se conecta: **no crea ni modifica tablas**. Las tablas salen de
+los archivos de `src/db/migrations/`, no de los modelos.
 
 ### Problemas comunes
 
 **`ECONNREFUSED 127.0.0.1:3306`**
 MySQL no esta encendido. Abre Laragon o XAMPP y enciende MySQL.
+
+**`Unknown database` o `Table '...' doesn't exist`**
+Faltan las migraciones. Corre `npm run db:setup`.
 
 **`Access denied for user 'root'`**
 La contrasena no coincide. Revisa `DB_PASSWORD` en tu `.env` (con Laragon o
@@ -99,6 +117,29 @@ XAMPP va vacia).
 **Uso WSL y MySQL esta en Windows**
 Dentro de WSL, `127.0.0.1` no llega a Windows. Lo mas facil es correr el
 proyecto desde una terminal de Windows (PowerShell o la terminal de VS Code).
+
+## Migraciones y seeders
+
+| Comando | Que hace |
+|---|---|
+| `npm run migrate` | Crea la DB si no existe y ejecuta las migraciones pendientes |
+| `npm run seed` | Ejecuta los seeders pendientes |
+| `npm run db:setup` | Los dos, en ese orden |
+
+- Los archivos se ejecutan en orden de nombre: `AAAAMMDD_HH_MM_SS_<descripcion>.sql`.
+  Una tabla con FK hacia otra tiene que ir despues.
+- Cada archivo ejecutado queda anotado en la tabla `migrations` (o `seeders`) y
+  no se vuelve a correr.
+- Si un archivo falla, se corta ahi y no queda anotado: se corrige y se vuelve a
+  correr.
+- **Nunca edites una migracion que ya corrio.** Para cambiar una tabla, crea un
+  archivo nuevo (`..._add_<columna>_on_<tabla>_table.sql`).
+- Una tabla por archivo: MySQL no deshace un `CREATE TABLE` si falla una
+  sentencia posterior del mismo archivo.
+- Los seeders usan `INSERT IGNORE` con IDs fijos, asi no fallan sobre una base
+  que ya tiene esos datos.
+- El modelo de Sequelize tiene que tener las mismas columnas que la migracion:
+  el modelo no crea la tabla, solo la usa.
 
 ## Convenciones
 
@@ -145,8 +186,9 @@ primer usuario de la tabla (el del seeder). El TODO en
 
 ## Agregar una entidad nueva
 
-1. `src/models/<entidad>.model.js` — el `index.js` la autocarga.
-2. `src/decorators/<entidad>.decorator.js`
-3. `src/controllers/<entidad>.controller.js`
-4. `src/routes/<entidad>.routes.js` + registrarla en `index.routes.js`
-5. `src/controllers/<entidad>.controller.test.js`
+1. `src/db/migrations/<AAAAMMDD_HH_MM_SS>_create_<tabla>_table.sql` + `npm run migrate`.
+2. `src/models/<entidad>.model.js` — el `index.js` la autocarga.
+3. `src/decorators/<entidad>.decorator.js`
+4. `src/controllers/<entidad>.controller.js`
+5. `src/routes/<entidad>.routes.js` + registrarla en `index.routes.js`
+6. `src/controllers/<entidad>.controller.test.js`

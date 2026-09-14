@@ -2,9 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const config = require('./config/config');
 const db = require('./models');
-const createDatabase = require('./db/createDatabase');
 const routes = require('./routes/index.routes');
-const runSeeders = require('./seeders/iniData');
 
 class Server {
     constructor() {
@@ -18,15 +16,11 @@ class Server {
         this.routes();
     }
 
+    // Database connection method
     async dbConnection() {
-        return createDatabase()
-            .then(() => db.sequelize.authenticate())
+        return db.sequelize.authenticate()
             .then(() => {
                 console.log('Database connected');
-                return db.sequelize.sync({ alter: true });
-            })
-            .then(() => {
-                console.log('models synchronized');
             })
             .catch((error) => {
                 console.error('Error initializing server:', error);
@@ -37,7 +31,6 @@ class Server {
     async prepare() {
         try {
             await this.dbConnection();
-            await runSeeders();
             return this;
         } catch (error) {
             console.error('Error preparing server:', error);
