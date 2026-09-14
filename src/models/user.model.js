@@ -32,10 +32,9 @@ module.exports = (sequelize, DataTypes) => {
         paranoid: true,
     });
 
-    // Associations with other models are declared here.
-    // User.associate = (models) => {
-    //     User.hasMany(models.Post, { foreignKey: 'user_id', as: 'posts' });
-    // };
+    User.associate = (models) => {
+        User.hasOne(models.School, { foreignKey: 'user_id', as: 'school' });
+    };
 
     return User;
 };

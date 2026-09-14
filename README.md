@@ -17,14 +17,17 @@ src/
 │   └── seeders/                      # .sql con datos iniciales (usuario demo)
 ├── models/
 │   ├── index.js                      # Autocarga de modelos + asociaciones
-│   └── user.model.js                 # Modelo de ejemplo
+│   ├── user.model.js                 # Usuario (hasOne School)
+│   └── school.model.js               # Colegio del usuario (belongsTo User)
 ├── routes/
 │   ├── index.routes.js               # Router raiz montado en /api
 │   └── user.routes.js                # Rutas de user
 ├── controllers/
 │   ├── user.controller.js            # Logica: me()
 │   └── user.controller.test.js       # Test co-locado (node:test)
-├── decorators/user.decorator.js      # Shape de la respuesta (DTO)
+├── decorators/
+│   ├── user.decorator.js             # Shape de la respuesta (DTO), incluye el colegio
+│   └── school.decorator.js           # Colegio (null si el usuario no tiene)
 └── utils/hashPassword.js             # Helper bcrypt
 ```
 
@@ -115,11 +118,13 @@ Migrations complete
 npm run seed
 ```
 
-Ejecuta los archivos de `src/db/seeders/` (por ahora, el
-[usuario demo](#usuario-del-seeder)). Si todo sale bien vas a ver:
+Ejecuta los archivos de `src/db/seeders/` (por ahora, el usuario demo y su
+colegio; ver [Usuario del seeder](#usuario-del-seeder)). Si todo sale bien vas
+a ver:
 
 ```
 seeders: 20260914_11_00_00_seed_demo_user.sql
+seeders: 20260914_11_00_01_seed_demo_school.sql
 Seeders complete
 ```
 
@@ -220,10 +225,16 @@ GET /api/user/me
     "id": "01JYQZ8K3M4N5P6Q7R8S9T0V1W",
     "firstname": "User",
     "lastname": "Admin",
-    "email": "user@admin.com"
+    "email": "user@admin.com",
+    "school": {
+      "id": "01JYQZ9A4B5C6D7E8F9G0H1J2K",
+      "name": "Colegio San Martín"
+    }
   }
 }
 ```
+
+Si el usuario todavia no creo su colegio, `school` viene en `null`.
 
 Sin middleware de auth no hay `req.user`, por lo que el controller resuelve al
 primer usuario de la tabla (el del seeder). El TODO en
@@ -239,6 +250,14 @@ primer usuario de la tabla (el del seeder). El TODO en
 | lastname | Admin |
 | email | user@admin.com |
 | password | `Admin123!` (se guarda hasheada con bcrypt) |
+
+Y su colegio:
+
+| Campo | Valor |
+|---|---|
+| id | `01JYQZ9A4B5C6D7E8F9G0H1J2K` |
+| user_id | `01JYQZ8K3M4N5P6Q7R8S9T0V1W` |
+| name | Colegio San Martín |
 
 ## Agregar una entidad nueva
 
