@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS schools (
+    id CHAR(26) NOT NULL COMMENT 'ULID',
+    user_id CHAR(26) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+
+    UNIQUE KEY uq_schools_user_id (user_id),
+
+    CONSTRAINT fk_schools_user
+        FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
