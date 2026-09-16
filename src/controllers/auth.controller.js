@@ -3,9 +3,22 @@ const bcrypt = require('bcrypt');
 const { User, School } = require('../models');
 const userDecorator = require('../decorators/user.decorator');
 const config = require('../config/config');
+const Joi = require('joi');
 
 exports.login = async (req, res) => {
     try {
+         const userValidator = Joi.object(
+            {
+                email: Joi.string().email().required(),
+                password: Joi.string().required()
+            }
+        );
+        
+        const { error } = userValidator.validate(req.body);
+
+        if (error) {
+            return res.status(400).json({ message: error.details[0].message });
+        }
         const { email, password } = req.body;
 
         if (!email || !password) {
