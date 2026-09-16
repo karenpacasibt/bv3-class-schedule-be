@@ -12,6 +12,7 @@ const config = {
         password: process.env.DB_PASSWORD || '',
         name: process.env.DB_NAME || 'scaffold'
     },
+    JWT_SECRET: process.env.JWT_SECRET || 'dev-secret' ,
 };
 
 module.exports = config;

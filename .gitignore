@@ -1,2 +1,8 @@
 node_modules
 .env
+
+# opencode local: configuracion, agentes, skills y comandos (no se suben)
+.opencode/
+
+# documentacion local y memoria del agente (no se suben)
+docs/
