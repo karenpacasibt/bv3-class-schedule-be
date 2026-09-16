@@ -1,36 +1,16 @@
 const { User, School, Classroom } = require('../models');
 const { ulid } = require('ulid');
 const classroomDecorator = require('../decorators/classroom.decorator');
-
-const CLASSROOM_TYPES = ['COMMON', 'LAB', 'COMPUTER'];
-
-const getSchoolId = async (req) => {
-    if (req.user?.schoolId) return req.user.schoolId;
-
-    const user = await User.findOne({
-        include: [{ model: School, as: 'school' }],
-        order: [['created_at', 'ASC']],
-    });
-
-    return user?.school?.id || null;
-};
-
-const validateClassroom = ({ name, capacity, type }) => {
-    if (name === undefined || name === null || String(name).trim() === '') {
-        return 'El nombre es obligatorio';
-    }
-    if (!Number.isInteger(capacity) || capacity <= 0) {
-        return 'La capacidad debe ser un número entero mayor a 0';
-    }
-    if (!CLASSROOM_TYPES.includes(type)) {
-        return 'El tipo debe ser COMMON, LAB o COMPUTER';
-    }
-    return null;
-};
+const { getSchoolId } = require('../utils/getSchool');
+const { CLASSROOM_TYPES } = require('../constans/typeClassroom');
+const Joi = require('joi');
+const validateULID = require('../utils/validateULID');
+const { uniqueNameClassroom } = require('../utils/validateClassroom');
+const school_id_dummy = "01JYQZ9A4B5C6D7E8F9G0H1J2K"; //actualizar cuando este el middleware de autenticación
 
 exports.index = async (req, res) => {
     try {
-        const school_id = await getSchoolId(req);
+        const school_id = await getSchoolId(school_id_dummy);
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -46,14 +26,22 @@ exports.index = async (req, res) => {
 
 exports.store = async (req, res) => {
     try {
+        const validateClassroom = Joi.object({
+            name: Joi.string().trim().required(),
+            capacity: Joi.number().integer().positive().required(),
+            type: Joi.string().valid(...CLASSROOM_TYPES).required(),
+        });
+        const { error } = validateClassroom.validate(req.body);
+        if (error) {
+            return res.status(400).json({ message: error.details[0].message });
+        }
         const { name, capacity, type } = req.body;
 
-        const error = validateClassroom({ name, capacity, type });
-        if (error) {
-            return res.status(400).json({ message: error });
+        const school_id = await getSchoolId(school_id_dummy);
+        const duplicateName = await uniqueNameClassroom(name, school_id);
+        if (duplicateName) {
+            return res.status(400).json({ message: duplicateName });
         }
-
-        const school_id = await getSchoolId(req);
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -76,7 +64,12 @@ exports.store = async (req, res) => {
 exports.show = async (req, res) => {
     try {
         const { id } = req.params;
-        const school_id = await getSchoolId(req);
+        const schoolValidateId = validateULID(id);
+        if (!schoolValidateId) {
+            return res.status(400).json({ message: 'Invalid classroom ID' });
+        }
+        
+        const school_id = await getSchoolId(school_id_dummy);
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -97,14 +90,28 @@ exports.show = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { id } = req.params;
+        const schoolValidateId = validateULID(id);
+        if (!schoolValidateId) {
+            return res.status(400).json({ message: 'Invalid classroom ID' });
+        }
         const { name, capacity, type } = req.body;
 
-        const error = validateClassroom({ name, capacity, type });
+        const validateClassroom = Joi.object({
+            name: Joi.string().trim().required(),
+            capacity: Joi.number().integer().positive().required(),
+            type: Joi.string().valid(...CLASSROOM_TYPES).required(),
+        });
+        const { error } = validateClassroom.validate(req.body);
         if (error) {
-            return res.status(400).json({ message: error });
+            return res.status(400).json({ message: error.details[0].message });
         }
 
-        const school_id = await getSchoolId(req);
+        const school_id = await getSchoolId(school_id_dummy);
+
+        const duplicateName = await uniqueNameClassroom(name, school_id, id);
+        if (duplicateName) {
+            return res.status(400).json({ message: duplicateName });
+        }
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -123,7 +130,7 @@ exports.update = async (req, res) => {
         });
 
         return res.status(200).json({ data: classroomDecorator(classroom) });
-    } catch (err) {
+    } catch (err) {        
         return res.status(500).json({ error: 'Error updating classroom' });
     }
 };
@@ -131,7 +138,7 @@ exports.update = async (req, res) => {
 exports.destroy = async (req, res) => {
     try {
         const { id } = req.params;
-        const school_id = await getSchoolId(req);
+        const school_id = await getSchoolId(school_id_dummy);
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
