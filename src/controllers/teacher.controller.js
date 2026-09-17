@@ -98,7 +98,6 @@ const update = async (req, res) => {
         });
 
         return res.status(200).json({
-            message: 'Teacher successfully modified',
             data: teacherDecorator(teacher)
         });
     } catch (error) {
@@ -126,7 +125,6 @@ const destroy = async (req, res) => {
         await teacher.destroy();
 
         return res.status(200).json({
-            message: 'Teacher logically deleted',
             data: teacherDecorator(teacher)
         });
     } catch (error) {
