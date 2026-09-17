@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
-const { School } = require('../models');
+const { User, School } = require('../models');
+const userDecorator = require('../decorators/user.decorator');
 
 const INVALID_SESSION = 'Tu sesión no es válida, vuelve a ingresar';
 
@@ -25,12 +26,15 @@ exports.verifyToken = async (req, res, next) => {
             return res.status(401).json({ message: INVALID_SESSION });
         }
 
-        const school = await School.findOne({ where: { user_id: payload.id } });
+        
+        const user = await User.findByPk(payload.id, {
+            include: [{model: School, as: 'school'}],
+        });
+        if (!user){
+            return res.status(401).json({message: INVALID_SESSION});
+        }
 
-        req.user = {
-            id: payload.id,
-            schoolId: school ? school.id : null,
-        };
+        req.user = userDecorator(user);
 
         return next();
     } catch (err) {

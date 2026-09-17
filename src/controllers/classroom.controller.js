@@ -9,7 +9,7 @@ const { uniqueNameClassroom } = require('../utils/validateClassroom');
 
 exports.index = async (req, res) => {
     try {
-        const school_id = req.user.schoolId;
+        const school_id = req.user.school?.id;
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -36,7 +36,7 @@ exports.store = async (req, res) => {
         }
         const { name, capacity, type } = req.body;
 
-        const school_id = req.user.schoolId;
+        const school_id = req.user.school?.id;
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
         }
@@ -68,7 +68,7 @@ exports.show = async (req, res) => {
             return res.status(400).json({ message: 'Invalid classroom ID' });
         }
         
-        const school_id = req.user.schoolId;
+        const school_id = req.user.school?.id;
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -105,7 +105,7 @@ exports.update = async (req, res) => {
             return res.status(400).json({ message: error.details[0].message });
         }
 
-        const school_id = req.user.schoolId;
+        const school_id = req.user.school?.id;
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -137,7 +137,7 @@ exports.update = async (req, res) => {
 exports.destroy = async (req, res) => {
     try {
         const { id } = req.params;
-        const school_id = req.user.schoolId;
+        const school_id = req.user.school?.id;
         
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
