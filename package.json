@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
+    "dev": "fuser -k 3000/tcp 2>/dev/null; nodemon src/index.js",
     "start": "node src/index.js",
     "migrate": "node src/db/runMigrations.js",
     "seed": "node src/db/runSeeders.js",

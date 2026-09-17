@@ -7,23 +7,25 @@ const Joi = require('joi');
 
 exports.login = async (req, res) => {
     try {
-         const userValidator = Joi.object(
+        const userValidator = Joi.object(
             {
-                email: Joi.string().email().required(),
-                password: Joi.string().required()
+                email: Joi.string().email().required().label('correo'),
+                password: Joi.string().required().label('contraseña')
             }
-        );
+        ).messages({
+            'any.required': 'El campo {#label} es requerido',
+            'string.empty': 'El campo {#label} no puede estar vacío',
+            'string.email': 'El campo {#label} debe ser un email válido',
+            'string.base': 'El campo {#label} debe ser un texto'
+        });
         
         const { error } = userValidator.validate(req.body);
 
         if (error) {
             return res.status(400).json({ message: error.details[0].message });
         }
-        const { email, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(401).json({ message: 'Correo o contraseña incorrectos' });
-        }
+        const { email, password } = req.body;
 
         const user = await User.findOne({
             where: { email },
