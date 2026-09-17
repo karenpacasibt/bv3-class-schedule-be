@@ -15,8 +15,9 @@ exports.register = async (req, res) => {
                 firstname: Joi.string().required(),
                 lastname: Joi.string().required(),
                 email: Joi.string().email().required(),
-                password: Joi.string().required()
-            }
+                password: Joi.string().required().min(8).label('Password')
+                .messages({'string.min': 'El password debe tener al menos 8 caracteres'})
+        }
         );
 
         const { error } = userValidator.validate(req.body);
@@ -32,9 +33,6 @@ exports.register = async (req, res) => {
         if (existingUser) {
             return res.status(422).json({ message: 'El correo ya está registrado' });
         }
-        if (password.length < 8) {
-            return res.status(404).json({ message: 'La contraseña debe tener al menos 8 caracteres' });
-        }
 
         const hashedPassword = await hashPassword(password);
 
@@ -45,19 +43,13 @@ exports.register = async (req, res) => {
             email,
             password: hashedPassword
         });
-        
-        const userWithSchool = await User.findOne({
-            where: { id: user.id },
-            include: [{ model: School, as: 'school' }],
-        });
 
         const token = jwt.sign({ id: user.id }, config.JWT_SECRET, {
             expiresIn: '7d',
         });
 
         return res.status(201).json({
-            data: { token, user: userDecorator(userWithSchool)
-            }
+            data: { token, user: userDecorator(user) }
         });
 
     } catch (err) {
