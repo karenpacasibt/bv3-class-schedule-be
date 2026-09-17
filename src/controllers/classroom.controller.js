@@ -1,16 +1,15 @@
 const { User, School, Classroom } = require('../models');
 const { ulid } = require('ulid');
 const classroomDecorator = require('../decorators/classroom.decorator');
-const { getSchoolId } = require('../utils/getSchool');
 const { CLASSROOM_TYPES } = require('../constans/typeClassroom');
 const Joi = require('joi');
 const validateULID = require('../utils/validateULID');
 const { uniqueNameClassroom } = require('../utils/validateClassroom');
-const school_id_dummy = "01JYQZ9A4B5C6D7E8F9G0H1J2K"; //actualizar cuando este el middleware de autenticación
+
 
 exports.index = async (req, res) => {
     try {
-        const school_id = await getSchoolId(school_id_dummy);
+        const school_id = req.user.school?.id;
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -37,15 +36,15 @@ exports.store = async (req, res) => {
         }
         const { name, capacity, type } = req.body;
 
-        const school_id = await getSchoolId(school_id_dummy);
+        const school_id = req.user.school?.id;
+        if (!school_id) {
+            return res.status(404).json({ message: 'No school found for current user' });
+        }
         const duplicateName = await uniqueNameClassroom(name, school_id);
         if (duplicateName) {
             return res.status(400).json({ message: duplicateName });
         }
 
-        if (!school_id) {
-            return res.status(404).json({ message: 'No school found for current user' });
-        }
 
         const classroom = await Classroom.create({
             id: ulid(),
@@ -69,7 +68,7 @@ exports.show = async (req, res) => {
             return res.status(400).json({ message: 'Invalid classroom ID' });
         }
         
-        const school_id = await getSchoolId(school_id_dummy);
+        const school_id = req.user.school?.id;
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
@@ -106,16 +105,16 @@ exports.update = async (req, res) => {
             return res.status(400).json({ message: error.details[0].message });
         }
 
-        const school_id = await getSchoolId(school_id_dummy);
-
-        const duplicateName = await uniqueNameClassroom(name, school_id, id);
-        if (duplicateName) {
-            return res.status(400).json({ message: duplicateName });
-        }
+        const school_id = req.user.school?.id;
 
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
         }
+        const duplicateName = await uniqueNameClassroom(name, school_id, id);
+        if (duplicateName) {
+            return res.status(400).json({ message: duplicateName });
+        }
+        
 
         const classroom = await Classroom.findOne({ where: { id, school_id } });
 
@@ -138,8 +137,8 @@ exports.update = async (req, res) => {
 exports.destroy = async (req, res) => {
     try {
         const { id } = req.params;
-        const school_id = await getSchoolId(school_id_dummy);
-
+        const school_id = req.user.school?.id;
+        
         if (!school_id) {
             return res.status(404).json({ message: 'No school found for current user' });
         }
