@@ -13,8 +13,7 @@ const index = async (req, res) => {
     try {
         const courses = await Course.findAll({
             where: {
-                school_id: req.user.school_id,
-                deleted_at: null
+                school_id: req.user.school_id
             },
             order: [['name', 'ASC']]
         });
@@ -23,7 +22,6 @@ const index = async (req, res) => {
             data: courses.map(courseDecorator)
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             error: 'Internal Server Error'
         });
@@ -41,8 +39,7 @@ const show = async (req, res) => {
         const course = await Course.findOne({
             where: {
                 id: req.params.id,
-                school_id: req.user.school_id,
-                deleted_at: null
+                school_id: req.user.school_id
             }
         });
 
@@ -56,7 +53,6 @@ const show = async (req, res) => {
             data: courseDecorator(course)
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             error: 'Internal Server Error'
         });
@@ -84,7 +80,6 @@ const store = async (req, res) => {
             data: courseDecorator(newCourse)
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             error: 'Internal Server Error'
         });
@@ -110,8 +105,7 @@ const update = async (req, res) => {
         const course = await Course.findOne({
             where: {
                 id: req.params.id,
-                school_id: req.user.school_id,
-                deleted_at: null
+                school_id: req.user.school_id               
             }
         });
 
@@ -130,7 +124,6 @@ const update = async (req, res) => {
             data: courseDecorator(course)
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             error: 'Internal Server Error'
         });
@@ -148,8 +141,7 @@ const destroy = async (req, res) => {
         const course = await Course.findOne({
             where: {
                 id: req.params.id,
-                school_id: req.user.school_id,
-                deleted_at: null
+                school_id: req.user.school_id
             }
         });
 
@@ -159,7 +151,7 @@ const destroy = async (req, res) => {
             });
         }
 
-        await course.update({
+        await course.destroy({
             deleted_at: new Date()
         });
 
@@ -167,7 +159,6 @@ const destroy = async (req, res) => {
             data: courseDecorator(course)
         });
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             error: 'Internal Server Error'
         });

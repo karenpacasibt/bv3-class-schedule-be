@@ -23,28 +23,13 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         validate: {
           isInt: {
-            msg: "La cantidad de estudiantes debe ser un número entero",
+            msg: "The number of students must be an integer.",
           },
           min: {
             args: [1],
-            msg: "La cantidad de estudiantes debe ser mayor que 0",
+            msg: "The number of students must be greater than zero.",
           },
         },
-      },
-
-      created_at: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-
-      updated_at: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-
-      deleted_at: {
-        type: DataTypes.DATE,
-        allowNull: true,
       },
     },
     {
@@ -52,7 +37,8 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
-      paranoid: false,
+      deletedAt: "deleted_at",
+      paranoid: true,
     }
   );
 
