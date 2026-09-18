@@ -6,6 +6,8 @@ const teacherRoutes = require('./teacher.routes');
 
 const authMiddleware = require('../middlewares/auth.middleware');
 
+const subjectRoutes = require("./subject.routes");
+
 const router = express.Router();
 
 router.use('/auth', authRoutes);
@@ -16,5 +18,7 @@ router.use('/user', userRoutes);
 router.use('/classrooms', classroomRoutes);
 router.use('/teachers', teacherRoutes);
 
+
+router.use("/subjects", subjectRoutes);
 
 module.exports = router;
