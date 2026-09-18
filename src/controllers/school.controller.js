@@ -29,6 +29,8 @@ const store = async (req, res) => {
             user_id: req.user.id,
             name: normalizedName
         });
+        
+        req.user.school = newSchool;
 
         return res.status(201).json({ data: schoolDecorator(newSchool) });
     } catch (err) {
