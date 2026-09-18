@@ -1,56 +1,66 @@
-const { Subject, School } = require("../models");
+const Joi = require("joi");
+const { Subject } = require("../models");
 const subjectDecorator = require("../decorators/subject.decorator");
+const validateULID = require("../utils/validateULID");
 
 const ROOM_TYPES = ["COMMON", "LAB", "COMPUTER"];
-const ULID_REGEX = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
-const isValidId = (id) => typeof id === "string" && ULID_REGEX.test(id);
+const WEEKLY_HOURS_EVEN_MESSAGE = "The hours per week must be an even number.";
 
-const validateSubjectData = (data, { partial = false } = {}) => {
-  const errors = [];
-
-  if (!partial || data.name !== undefined) {
-    if (!data.name || typeof data.name !== "string" || !data.name.trim()) {
-      errors.push("El nombre es obligatorio");
+const weeklyHours = Joi.number()
+  .integer()
+  .positive()
+  .custom((value, helpers) => {
+    if (value % 2 !== 0) {
+      return helpers.message(WEEKLY_HOURS_EVEN_MESSAGE);
     }
-  }
+    return value;
+  })
+  .messages({
+    "number.base": "Weekly hours must be an integer greater than 0",
+    "number.integer": "Weekly hours must be an integer greater than 0",
+    "number.positive": "Weekly hours must be an integer greater than 0",
+  });
 
-  if (!partial || data.weekly_hours !== undefined) {
-    const hours = Number(data.weekly_hours);
-    if (!Number.isInteger(hours) || hours <= 0) {
-      errors.push(
-        "Las horas por semana deben ser un número entero mayor que 0",
-      );
-    } else if (hours % 2 !== 0) {
-      errors.push("Las horas por semana deben ser un número par");
-    }
-  }
+const subjectCreateSchema = Joi.object({
+  name: Joi.string().trim().min(1).required().messages({
+    "string.empty": "Name is required",
+    "any.required": "Name is required",
+  }),
+  weekly_hours: weeklyHours.required().messages({
+    "any.required": "Weekly hours is required",
+  }),
+  required_room_type: Joi.string()
+    .valid(...ROOM_TYPES)
+    .required()
+    .messages({
+      "any.only": "Room type must be COMMON, LAB or COMPUTER",
+      "any.required": "Room type is required",
+    }),
+});
 
-  if (!partial || data.required_room_type !== undefined) {
-    if (!ROOM_TYPES.includes(data.required_room_type)) {
-      errors.push("El tipo de aula debe ser COMMON, LAB o COMPUTER");
-    }
-  }
-
-  return errors;
-};
-
-const getSchoolId = async (res) => {
-  const school = await School.findOne({ order: [["created_at", "ASC"]] });
-  if (!school) {
-    res.status(404).json({ message: "No query result for model School" });
-    return null;
-  }
-  return school.id;
-};
+const subjectUpdateSchema = Joi.object({
+  name: Joi.string().trim().min(1).messages({
+    "string.empty": "Name is required",
+  }),
+  weekly_hours: weeklyHours,
+  required_room_type: Joi.string()
+    .valid(...ROOM_TYPES)
+    .messages({
+      "any.only": "Room type must be COMMON, LAB or COMPUTER",
+    }),
+})
+  .min(1)
+  .messages({
+    "object.min": "At least one field must be provided",
+  });
 
 const notFound = (res) =>
   res.status(404).json({ message: "No query result for model Subject" });
 
 exports.index = async (req, res) => {
   try {
-    const schoolId = await getSchoolId(res);
-    if (!schoolId) return;
+    const schoolId = req.user.school.id;
 
     const subjects = await Subject.findAll({
       where: { school_id: schoolId },
@@ -66,10 +76,9 @@ exports.index = async (req, res) => {
 
 exports.show = async (req, res) => {
   try {
-    if (!isValidId(req.params.id)) return notFound(res);
+    if (!validateULID(req.params.id)) return notFound(res);
 
-    const schoolId = await getSchoolId(res);
-    if (!schoolId) return;
+    const schoolId = req.user.school.id;
 
     const subject = await Subject.findOne({
       where: { id: req.params.id, school_id: schoolId },
@@ -86,25 +95,20 @@ exports.show = async (req, res) => {
 
 exports.store = async (req, res) => {
   try {
-    const schoolId = await getSchoolId(res);
-    if (!schoolId) return;
+    const schoolId = req.user.school.id;
 
-    const { name, weekly_hours, required_room_type } = req.body;
-
-    const errors = validateSubjectData({
-      name,
-      weekly_hours,
-      required_room_type,
+    const { error, value } = subjectCreateSchema.validate(req.body, {
+      abortEarly: false,
     });
-    if (errors.length) {
-      return res.status(422).json({ errors });
+    if (error) {
+      return res
+        .status(422)
+        .json({ errors: error.details.map((d) => d.message) });
     }
 
     const subject = await Subject.create({
       school_id: schoolId,
-      name,
-      weekly_hours,
-      required_room_type,
+      ...value,
     });
 
     return res.status(201).json({ data: subjectDecorator(subject) });
@@ -116,10 +120,9 @@ exports.store = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    if (!isValidId(req.params.id)) return notFound(res);
+    if (!validateULID(req.params.id)) return notFound(res);
 
-    const schoolId = await getSchoolId(res);
-    if (!schoolId) return;
+    const schoolId = req.user.school.id;
 
     const subject = await Subject.findOne({
       where: { id: req.params.id, school_id: schoolId },
@@ -127,20 +130,16 @@ exports.update = async (req, res) => {
 
     if (!subject) return notFound(res);
 
-    const { name, weekly_hours, required_room_type } = req.body;
-    const errors = validateSubjectData(
-      { name, weekly_hours, required_room_type },
-      { partial: true },
-    );
-    if (errors.length) {
-      return res.status(422).json({ errors });
+    const { error, value } = subjectUpdateSchema.validate(req.body, {
+      abortEarly: false,
+    });
+    if (error) {
+      return res
+        .status(422)
+        .json({ errors: error.details.map((d) => d.message) });
     }
 
-    await subject.update({
-      ...(name !== undefined && { name }),
-      ...(weekly_hours !== undefined && { weekly_hours }),
-      ...(required_room_type !== undefined && { required_room_type }),
-    });
+    await subject.update(value);
 
     return res.status(200).json({ data: subjectDecorator(subject) });
   } catch (err) {
@@ -151,10 +150,9 @@ exports.update = async (req, res) => {
 
 exports.destroy = async (req, res) => {
   try {
-    if (!isValidId(req.params.id)) return notFound(res);
+    if (!validateULID(req.params.id)) return notFound(res);
 
-    const schoolId = await getSchoolId(res);
-    if (!schoolId) return;
+    const schoolId = req.user.school.id;
 
     const subject = await Subject.findOne({
       where: { id: req.params.id, school_id: schoolId },
@@ -165,7 +163,6 @@ exports.destroy = async (req, res) => {
     await subject.destroy();
 
     return res.status(200).json({
-      message: "Materia eliminada correctamente",
       data: {
         id: subject.id,
         name: subject.name,
