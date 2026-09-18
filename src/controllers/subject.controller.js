@@ -35,7 +35,6 @@ const validateSubjectData = (data, { partial = false } = {}) => {
   return errors;
 };
 
-// TODO: volver a req.user.school.id cuando esté listo el middleware de auth
 const getSchoolId = async (res) => {
   const school = await School.findOne({ order: [["created_at", "ASC"]] });
   if (!school) {
