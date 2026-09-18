@@ -69,7 +69,6 @@ exports.index = async (req, res) => {
 
     return res.status(200).json({ data: subjects.map(subjectDecorator) });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "Error fetching subjects" });
   }
 };
@@ -88,7 +87,6 @@ exports.show = async (req, res) => {
 
     return res.status(200).json({ data: subjectDecorator(subject) });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "Error fetching subject" });
   }
 };
@@ -113,7 +111,6 @@ exports.store = async (req, res) => {
 
     return res.status(201).json({ data: subjectDecorator(subject) });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "Error creating subject" });
   }
 };
@@ -143,7 +140,6 @@ exports.update = async (req, res) => {
 
     return res.status(200).json({ data: subjectDecorator(subject) });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "Error updating subject" });
   }
 };
@@ -170,7 +166,6 @@ exports.destroy = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "Error deleting subject" });
   }
 };
