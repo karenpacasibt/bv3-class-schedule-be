@@ -71,7 +71,7 @@ const store = async (req, res) => {
 
         const newCourse = await Course.create({
             id: ulid(),
-            school_id: req.user.school_id,
+            school_id: req.user.school.id,
             name: value.name,
             student_count: value.student_count
         });
