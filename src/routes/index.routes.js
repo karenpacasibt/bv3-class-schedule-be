@@ -14,3 +14,5 @@ router.use(authMiddleware.verifyToken);
 router.use("/user", userRoutes);
 router.use("/classrooms", classroomRoutes);
 router.use("/subjects", subjectRoutes);
+
+module.exports = router;

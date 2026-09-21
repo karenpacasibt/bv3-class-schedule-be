@@ -2,6 +2,7 @@ const Joi = require("joi");
 const { Subject } = require("../models");
 const subjectDecorator = require("../decorators/subject.decorator");
 const validateULID = require("../utils/validateULID");
+const { ulid } = require("ulid");
 
 const ROOM_TYPES = ["COMMON", "LAB", "COMPUTER"];
 
@@ -98,20 +99,24 @@ exports.store = async (req, res) => {
     const { error, value } = subjectCreateSchema.validate(req.body, {
       abortEarly: false,
     });
+
     if (error) {
-      return res
-        .status(422)
-        .json({ errors: error.details.map((d) => d.message) });
+      return res.status(422).json({
+        errors: error.details.map((d) => d.message),
+      });
     }
 
     const subject = await Subject.create({
+      id: ulid(),
       school_id: schoolId,
       ...value,
     });
 
-    return res.status(201).json({ data: subjectDecorator(subject) });
+    return res.status(201).json({
+      data: subjectDecorator(subject),
+    });
   } catch (err) {
-    return res.status(500).json({ error: "Error creating subject" });
+    return res.status(500).json({ error: err.message });
   }
 };
 
