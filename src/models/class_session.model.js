@@ -31,11 +31,11 @@ module.exports = (sequelize, DataTypes) => {
       },
       day: {
         type: DataTypes.ENUM(
-          "MONDAY",
-          "TUESDAY",
-          "WEDNESDAY",
-          "THURSDAY",
-          "FRIDAY",
+          "LUNES",
+          "MARTES",
+          "MIERCOLES",
+          "JUEVES",
+          "VIERNES",
         ),
         allowNull: false,
       },
