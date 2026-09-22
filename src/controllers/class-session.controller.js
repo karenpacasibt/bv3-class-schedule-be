@@ -7,6 +7,7 @@ const {
   Classroom,
   Course,
 } = require("../models");
+const timeSlotDecorator = require("../decorators/time-slot.decorator");
 const classSessionDecorator = require("../decorators/class-session.decorator");
 const validateULID = require("../utils/validateULID");
 const validateClassSession = require("../validators/class-session.validator");
@@ -78,11 +79,7 @@ exports.timeSlots = async (req, res) => {
   try {
     const timeSlots = await TimeSlot.findAll({ order: [["id", "ASC"]] });
     return res.status(200).json({
-      data: timeSlots.map((timeSlot) => ({
-        id: timeSlot.id,
-        start_time: String(timeSlot.start_time).slice(0, 5),
-        end_time: String(timeSlot.end_time).slice(0, 5),
-      })),
+      data: timeSlots.map(timeSlotDecorator),
     });
   } catch (err) {
     return res.status(500).json({ error: "Error fetching time slots" });
@@ -143,11 +140,9 @@ const save = async (req, res, classSession) => {
 
   const schoolId = req.user.school?.id;
   if (!(await resourcesBelongToSchool(data, schoolId))) {
-    res
-      .status(422)
-      .json({
-        message: "All class session resources must belong to the school",
-      });
+    res.status(422).json({
+      message: "All class session resources must belong to the school",
+    });
     return null;
   }
 
