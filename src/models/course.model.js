@@ -39,8 +39,7 @@ module.exports = (sequelize, DataTypes) => {
       updatedAt: "updated_at",
       deletedAt: "deleted_at",
       paranoid: true,
-    }
+    },
   );
-
   return Course;
 };
