@@ -1,4 +1,7 @@
-const courseDecorator = require('../decorators/course.decorator');
+const {
+    courseDecorator,
+    coursesListDecorator
+} = require('../decorators/course.decorator');
 const Joi = require('joi');
 const validateULID = require('../utils/validateULID');
 const { Course } = require('../models');
@@ -19,7 +22,7 @@ const index = async (req, res) => {
         });
 
         return res.status(200).json({
-            data: courses.map(courseDecorator)
+            data: coursesListDecorator(courses)
         });
     } catch (error) {
         return res.status(500).json({
@@ -69,6 +72,19 @@ const store = async (req, res) => {
             });
         }
 
+        const existingCourse = await Course.findOne({
+            where: {
+                school_id: req.user.school_id,
+                name: value.name
+            }
+        });
+
+        if (existingCourse) {
+            return res.status(409).json({
+                error: 'A course with this name already exists'
+            });
+        }
+
         const newCourse = await Course.create({
             id: ulid(),
             school_id: req.user.school_id,
@@ -99,6 +115,18 @@ const update = async (req, res) => {
         if (error) {
             return res.status(400).json({
                 error: error.details[0].message
+            });
+        }
+        const existingCourse = await Course.findOne({
+            where: {
+                school_id: req.user.school_id,
+                name: value.name
+            }
+        });
+
+        if (existingCourse && existingCourse.id !== req.params.id) {
+            return res.status(409).json({
+                error: 'A course with this name already exists'
             });
         }
 
