@@ -118,13 +118,17 @@ Migrations complete
 npm run seed
 ```
 
-Ejecuta los archivos de `src/db/seeders/` (por ahora, el usuario demo y su
-colegio; ver [Usuario del seeder](#usuario-del-seeder)). Si todo sale bien vas
-a ver:
+Ejecuta los archivos de `src/db/seeders/` (el usuario demo, su colegio y los
+datos demo del Colegio San Martín; ver [Usuario del seeder](#usuario-del-seeder)
+y [Datos demo](#datos-demo-colegio-san-martin)). Si todo sale bien vas a ver:
 
 ```
 seeders: 20260914_11_00_00_seed_demo_user.sql
 seeders: 20260914_11_00_01_seed_demo_school.sql
+seeders: 20260914_12_00_10_seed_demo_teachers.sql
+seeders: 20260914_12_00_11_seed_demo_classrooms.sql
+seeders: 20260914_12_00_12_seed_demo_subjects.sql
+seeders: 20260914_12_00_13_seed_demo_courses.sql
 Seeders complete
 ```
 
@@ -258,6 +262,19 @@ Y su colegio:
 | id | `01JYQZ9A4B5C6D7E8F9G0H1J2K` |
 | user_id | `01JYQZ8K3M4N5P6Q7R8S9T0V1W` |
 | name | Colegio San Martín |
+
+## Datos demo (Colegio San Martín)
+
+Todos los registros apuntan al colegio del seeder
+(`01JYQZ9A4B5C6D7E8F9G0H1J2K`). En una base nueva, `npm run db:setup` deja los
+21 registros:
+
+| Tabla | Cantidad | Datos |
+|---|---|---|
+| `teachers` | 6 | Ana Rojas 12 h, Elena Suárez 10 h, Carlos Vega 8 h, Jorge Paz 8 h, Marta Ríos 8 h, Diego Salas 4 h |
+| `classrooms` | 5 | A-101 (40, común), A-102 (35, común), B-12 (25, común), LAB-1 (40, laboratorio), INF-1 (35, informática) |
+| `subjects` | 6 | Matemática 6 h, Lengua 6 h e Historia 4 h (común); Física 4 h y Química 2 h (laboratorio); Informática 4 h (informática) |
+| `courses` | 4 | 1°A (32), 1°B (28), 2°A (34), 2°B (24) |
 
 ## Agregar una entidad nueva
 
