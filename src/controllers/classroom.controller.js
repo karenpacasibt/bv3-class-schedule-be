@@ -157,11 +157,6 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: "Classroom not found" });
     }
 
-    const message = await checkInUse('classroom_id', classroom);
-
-    if (message) {
-      return res.status(422).json({ message });
-    }
 
     await classroom.update({
       name: String(name).trim(),
@@ -192,6 +187,14 @@ exports.destroy = async (req, res) => {
       return res.status(404).json({ message: "Classroom not found" });
     }
 
+
+
+    const message = await checkInUse('classroom_id', classroom);
+
+    if (message) {
+      return res.status(422).json({ message });
+    }
+    
     await classroom.destroy();
 
     return res.status(200).json({
