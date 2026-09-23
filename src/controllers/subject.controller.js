@@ -3,6 +3,7 @@ const { Subject } = require("../models");
 const subjectDecorator = require("../decorators/subject.decorator");
 const validateULID = require("../utils/validateULID");
 const { ulid } = require("ulid");
+const paginate = require("../utils/paginate");
 
 const ROOM_TYPES = ["COMMON", "LAB", "COMPUTER"];
 
@@ -63,12 +64,32 @@ exports.index = async (req, res) => {
   try {
     const schoolId = req.user.school.id;
 
-    const subjects = await Subject.findAll({
+    const query = {
       where: { school_id: schoolId },
       order: [["created_at", "ASC"]],
+    };
+
+    if (req.query.page === undefined) {
+      const subjects = await Subject.findAll(query);
+      return res.status(200).json({ data: subjects.map(subjectDecorator) });
+    }
+
+    const pagination = paginate(req.query.page, req.query.limit);
+    const { rows, count } = await Subject.findAndCountAll({
+      ...query,
+      limit: pagination.limit,
+      offset: pagination.offset,
     });
 
-    return res.status(200).json({ data: subjects.map(subjectDecorator) });
+    return res.status(200).json({
+      data: rows.map(subjectDecorator),
+      meta: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: count,
+        total_pages: Math.ceil(count / pagination.limit),
+      },
+    });
   } catch (err) {
     return res.status(500).json({ error: "Error fetching subjects" });
   }

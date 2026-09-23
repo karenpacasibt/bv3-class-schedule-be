@@ -7,7 +7,6 @@ const subjectRoutes = require("./subject.routes");
 const classSessionRoutes = require("./class-session.routes");
 const teacherRoutes = require("./teacher.routes");
 const courseRoutes = require("./course.routes");
-const progressRoutes = require("./progress.routes");
 
 const authMiddleware = require("../middlewares/auth.middleware");
 
@@ -22,7 +21,6 @@ router.use("/classrooms", classroomRoutes);
 router.use("/subjects", subjectRoutes);
 router.use("/teachers", teacherRoutes);
 router.use("/courses", courseRoutes);
-router.use("/progress", progressRoutes);
 router.use(classSessionRoutes);
 
 module.exports = router;

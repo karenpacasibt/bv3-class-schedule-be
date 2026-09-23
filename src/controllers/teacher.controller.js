@@ -3,6 +3,7 @@ const Joi = require("joi");
 const validateULID = require("../utils/validateULID");
 const { Teacher } = require("../models");
 const { ulid } = require("ulid");
+const paginate = require("../utils/paginate");
 
 const teacherFields = Joi.object({
   name: Joi.string().trim().required(),
@@ -11,12 +12,31 @@ const teacherFields = Joi.object({
 
 const index = async (req, res) => {
   try {
-    const teachers = await Teacher.findAll({
+    const query = {
       where: { school_id: req.user.school?.id },
       order: [["name", "ASC"]],
+    };
+
+    if (req.query.page === undefined) {
+      const teachers = await Teacher.findAll(query);
+      return res.status(200).json({ data: teachers.map(teacherDecorator) });
+    }
+
+    const pagination = paginate(req.query.page, req.query.limit);
+    const { rows, count } = await Teacher.findAndCountAll({
+      ...query,
+      limit: pagination.limit,
+      offset: pagination.offset,
     });
+
     return res.status(200).json({
-      data: teachers.map(teacherDecorator),
+      data: rows.map(teacherDecorator),
+      meta: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: count,
+        total_pages: Math.ceil(count / pagination.limit),
+      },
     });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });

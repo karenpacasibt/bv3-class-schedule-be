@@ -132,14 +132,13 @@ const save = async (req, res, classSession) => {
   const data = validPayload(req.body, res);
   if (!data) return null;
 
-  const schoolId = req.user.school?.id;
-
-  const validationMessage = await validateClassSession(data, classSession?.id, schoolId);
+  const validationMessage = await validateClassSession(data, classSession?.id);
   if (validationMessage) {
     res.status(422).json({ message: validationMessage });
     return null;
   }
 
+  const schoolId = req.user.school?.id;
   if (!(await resourcesBelongToSchool(data, schoolId))) {
     res.status(422).json({
       message: "All class session resources must belong to the school",
