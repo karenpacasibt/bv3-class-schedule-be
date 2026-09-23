@@ -17,7 +17,10 @@ exports.index = async (req, res) => {
         .json({ message: "No school found for current user" });
     }
 
-    const query = { where: { school_id } };
+    const query = {
+      where: { school_id },
+      order: [["name", "ASC"]],
+    };
 
     if (req.query.page === undefined) {
       const classrooms = await Classroom.findAll(query);
@@ -183,12 +186,10 @@ exports.destroy = async (req, res) => {
 
     await classroom.destroy();
 
-    return res
-      .status(200)
-      .json({
-        message: "Classroom deleted",
-        classroom: classroomDecorator(classroom),
-      });
+    return res.status(200).json({
+      message: "Classroom deleted",
+      classroom: classroomDecorator(classroom),
+    });
   } catch (err) {
     return res.status(500).json({ error: "Error deleting classroom" });
   }
