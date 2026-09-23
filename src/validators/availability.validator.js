@@ -20,6 +20,7 @@ const checkAvailability = async ({
     classSessionId = null,
 }) => {
     const where = {
+        school_id,
         day,
         time_slot_id,
         [Op.or]: [
@@ -29,9 +30,6 @@ const checkAvailability = async ({
         ],
     };
 
-    if (school_id) {
-        where.school_id = school_id;
-    }
 
     if (classSessionId) {
         where.id = { [Op.ne]: classSessionId };
