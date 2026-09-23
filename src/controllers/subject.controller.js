@@ -4,6 +4,8 @@ const subjectDecorator = require("../decorators/subject.decorator");
 const validateULID = require("../utils/validateULID");
 const { ulid } = require("ulid");
 const paginate = require("../utils/paginate");
+const checkInUse = require('../utils/checkInUse');
+
 
 const ROOM_TYPES = ["COMMON", "LAB", "COMPUTER"];
 
@@ -181,6 +183,11 @@ exports.destroy = async (req, res) => {
     });
 
     if (!subject) return notFound(res);
+    const message = await checkInUse('subject_id', subject);
+
+    if (message) {
+      return res.status(422).json({ message });
+    }
 
     await subject.destroy();
 
