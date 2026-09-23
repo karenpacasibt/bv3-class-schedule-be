@@ -1,44 +1,26 @@
-const { Course, Subject, Class } = require("../models"); 
+const { Course, Subject, ClassSession } = require("../models"); 
+const { calculateSubjectsProgress } = require("../utils/subjectsProgress");
 
 const getScheduleProgress = async (req, res, next) => {
   try {
     const schoolId = req.user.school.id; 
+    
     const [courses, subjects, classes] = await Promise.all([
       Course.findAll({ where: { school_id: schoolId } }),
       Subject.findAll({ where: { school_id: schoolId } }),
-      Class.findAll({ where: { school_id: schoolId } }) 
+      ClassSession.findAll({ where: { school_id: schoolId } }) 
     ]);
 
     let totalComplete = true;
 
     const coursesProgress = courses.map((course) => {
-      let courseComplete = true;
+      const { subjectsProgress, isCourseComplete } = calculateSubjectsProgress(
+        subjects,
+        classes,
+        course.id
+      );
 
-      const subjectsProgress = subjects.map((subject) => {
-        const assignedClassesCount = classes.filter(
-          (c) => c.course_id === course.id && c.subject_id === subject.id
-        ).length;
-
-        const requiredHours = subject.weekly_hours;
-        const assignedHours = assignedClassesCount * 2; 
-        const missingHours = Math.max(0, requiredHours - assignedHours);
-
-        if (missingHours > 0) {
-          courseComplete = false;
-        }
-
-        return {
-          subject: {
-            id: subject.id,
-            name: subject.name,
-          },
-          required_hours: requiredHours,
-          assigned_hours: assignedHours,
-          missing_hours: missingHours,
-        };
-      });
-
-      if (!courseComplete) {
+      if (!isCourseComplete) {
         totalComplete = false;
       }
 
@@ -47,7 +29,7 @@ const getScheduleProgress = async (req, res, next) => {
           id: course.id,
           name: course.name,
         },
-        complete: courseComplete,
+        complete: isCourseComplete,
         subjects: subjectsProgress,
       };
     });
