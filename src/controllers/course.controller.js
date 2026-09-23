@@ -7,6 +7,7 @@ const validateULID = require("../utils/validateULID");
 const { Course } = require("../models");
 const { ulid } = require("ulid");
 const paginate = require("../utils/paginate");
+const checkInUse = require('../utils/checkInUse');
 
 const courseFields = Joi.object({
   name: Joi.string().trim().required(),
@@ -198,6 +199,11 @@ const destroy = async (req, res) => {
       return res.status(404).json({
         error: "Course not found",
       });
+    }
+    const message = await checkInUse('course_id', course);
+
+    if (message) {
+      return res.status(422).json({ message });
     }
 
     await course.destroy({

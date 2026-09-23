@@ -1,4 +1,5 @@
 const teacherDecorator = require("../decorators/teacher.decorator");
+const checkInUse = require('../utils/checkInUse');
 const Joi = require("joi");
 const validateULID = require("../utils/validateULID");
 const { Teacher } = require("../models");
@@ -139,7 +140,14 @@ const destroy = async (req, res) => {
     });
 
     if (!teacher) {
-      return res.status(404).json({ error: "Teacher not found" });
+      return res.status(404).json({ error: 'Teacher not found' });
+    }
+
+    
+    const message = await checkInUse('teacher_id', teacher);
+
+    if (message) {
+      return res.status(422).json({ message });
     }
 
     await teacher.destroy();

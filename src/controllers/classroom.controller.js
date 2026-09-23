@@ -6,6 +6,8 @@ const Joi = require("joi");
 const validateULID = require("../utils/validateULID");
 const { uniqueNameClassroom } = require("../utils/validateClassroom");
 const paginate = require("../utils/paginate");
+const checkInUse = require('../utils/checkInUse');
+
 
 exports.index = async (req, res) => {
   try {
@@ -153,6 +155,12 @@ exports.update = async (req, res) => {
 
     if (!classroom) {
       return res.status(404).json({ message: "Classroom not found" });
+    }
+
+    const message = await checkInUse('classroom_id', classroom);
+
+    if (message) {
+      return res.status(422).json({ message });
     }
 
     await classroom.update({
